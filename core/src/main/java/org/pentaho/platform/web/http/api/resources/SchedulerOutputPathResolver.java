@@ -102,7 +102,7 @@ public class SchedulerOutputPathResolver {
     return scheduleRequest.getJobName();
   }
 
-  private String getScheduleOwner(){
+  private String getScheduleOwner() {
     return scheduleOwner;
   }
 
@@ -130,13 +130,14 @@ public class SchedulerOutputPathResolver {
   public String resolveOutputFilePath() {
 
     try {
-        return SecurityHelper.getInstance().runAsUser( getScheduleOwner(), this::resolveOutputFilePathCore );
+      return SecurityHelper.getInstance().runAsUser( getScheduleOwner(), this::resolveOutputFilePathCore );
     } catch ( Exception e ) {
       logger.error( e.getMessage(), e );
     }
 
     return null;
   }
+
   private String resolveOutputFilePathCore() {
     String fileNamePattern = "/" + getOutputFileBaseName() + ".*";
 
