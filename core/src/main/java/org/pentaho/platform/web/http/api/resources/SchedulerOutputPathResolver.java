@@ -121,7 +121,7 @@ public class SchedulerOutputPathResolver {
     // Schedule Owner should have already been validated with a fallback to administrator
     // if there is a problem with the schedule owner at this point, it is a bigger issue.
     if ( userName == null || userName.isEmpty() ) {
-      throw new RuntimeException( Messages.getString( "EnterpriseSchedulerService.InvalidUserName" ) );
+      throw new IllegalArgumentException( Messages.getString( "EnterpriseSchedulerService.InvalidUserName" ) );
     }
 
     return userName;
