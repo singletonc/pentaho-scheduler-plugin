@@ -35,6 +35,7 @@ import org.pentaho.platform.api.engine.IPluginManager;
 import org.pentaho.platform.api.engine.IUserRoleListService;
 import org.pentaho.platform.api.scheduler2.ComplexJobTrigger;
 import org.pentaho.platform.api.scheduler2.IBlockoutManager;
+import org.pentaho.platform.api.scheduler2.IJob;
 import org.pentaho.platform.api.scheduler2.IJobTrigger;
 import org.pentaho.platform.api.scheduler2.IScheduler;
 import org.pentaho.platform.api.scheduler2.Job;
@@ -43,7 +44,7 @@ import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.scheduler2.blockout.BlockoutManagerUtil.TIME;
 import org.pentaho.platform.scheduler2.quartz.test.StubUserDetailsService;
 import org.pentaho.platform.scheduler2.quartz.test.StubUserRoleListService;
-import org.pentaho.platform.scheduler2.ws.test.TestQuartzScheduler;
+import org.pentaho.platform.scheduler2.ws.TestQuartzScheduler;
 import org.pentaho.platform.scheduler2.ws.test.JaxWsSchedulerServiceIT.TstPluginManager;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -98,23 +99,6 @@ public class PentahoBlockoutManagerIT {
     }
   }
 
-  /**
-   * Test method for
-   * {@link org.pentaho.platform.scheduler2.blockout.PentahoBlockoutManager#getBlockOut(java.lang.String)}.
-   */
-  @Test
-  public void testGetBlockout() throws Exception {
-    IJobTrigger blockOutJobTrigger1 = new SimpleJobTrigger( new Date(), null, -1, 1000000 );
-    IJobTrigger blockOutJobTrigger2 = new SimpleJobTrigger( new Date(), null, -1, 1000000 );
-
-    Job blockOutJob1 = addBlockOutJob( blockOutJobTrigger1 );
-    Job blockOutJob2 = addBlockOutJob( blockOutJobTrigger2 );
-
-    assertEquals( blockOutManager.getBlockOut( blockOutJob1.getJobId() ).toString(), blockOutJobTrigger1.toString() );
-    assertEquals( blockOutManager.getBlockOut( blockOutJob2.getJobId() ).toString(), blockOutJobTrigger2.toString() );
-    assertNotSame( blockOutJobTrigger1, blockOutManager.getBlockOut( blockOutJob2.getJobId() ) );
-  }
-
   @Test
   public void testGetBlockouts() throws Exception {
     IJobTrigger trigger1 = new SimpleJobTrigger( new Date(), null, -1, 1000000 );
@@ -127,7 +111,7 @@ public class PentahoBlockoutManagerIT {
 
   /**
    * Test method for
-   * {@link org.pentaho.platform.scheduler2.blockout.PentahoBlockoutManager#willFire(org.quartz.IJobTrigger)}.
+   * {@link org.pentaho.platform.scheduler2.blockout.PentahoBlockoutManager#willFire(org.pentaho.platform.api.scheduler2.IJobTrigger)}.
    */
   @Test
   public void testWillFire() throws Exception {
@@ -146,7 +130,7 @@ public class PentahoBlockoutManagerIT {
     IJobTrigger falseScheduleTrigger =
         new SimpleJobTrigger( scheduleStartDate.getTime(), null, -1, TIME.WEEK.time / 1000 );
 
-    Job blockOutJob = addBlockOutJob( blockOutJobTrigger );
+    IJob blockOutJob = addBlockOutJob( blockOutJobTrigger );
     assertTrue( this.blockOutManager.willFire( trueScheduleTrigger ) );
     assertFalse( this.blockOutManager.willFire( falseScheduleTrigger ) );
 
@@ -184,7 +168,7 @@ public class PentahoBlockoutManagerIT {
 
   /**
    * Test method for
-   * {@link org.pentaho.platform.scheduler2.blockout.PentahoBlockoutManager#isPartiallyBlocked(org.quartz.IJobTrigger)}.
+   * {@link org.pentaho.platform.scheduler2.blockout.PentahoBlockoutManager#isPartiallyBlocked(org.pentaho.platform.api.scheduler2.IJobTrigger)}.
    */
   @Test
   public void testIsPartiallyBlocked() throws Exception {
@@ -208,7 +192,7 @@ public class PentahoBlockoutManagerIT {
     IJobTrigger falseSchedule1 =
         new SimpleJobTrigger( falseScheduleStartDate1.getTime(), null, -1, TIME.WEEK.time / 1000 );
 
-    Job blockOutJob = addBlockOutJob( blockOutTrigger );
+    IJob blockOutJob = addBlockOutJob( blockOutTrigger );
 
     assertTrue( this.blockOutManager.isPartiallyBlocked( trueSchedule1 ) );
     assertTrue( this.blockOutManager.isPartiallyBlocked( trueSchedule2 ) );
@@ -254,7 +238,7 @@ public class PentahoBlockoutManagerIT {
     IJobTrigger blockOutJobTrigger = new SimpleJobTrigger( blockOutStartDate, null, -1, TIME.WEEK.time * 2 / 1000 );
     blockOutJobTrigger.setDuration( duration );
 
-    Job blockOutJob = addBlockOutJob( blockOutJobTrigger );
+    IJob blockOutJob = addBlockOutJob( blockOutJobTrigger );
 
     assertFalse( this.blockOutManager.shouldFireNow() );
 
@@ -267,81 +251,14 @@ public class PentahoBlockoutManagerIT {
     assertTrue( this.blockOutManager.shouldFireNow() );
   }
 
-  /**
-   * Test method for
-   * {@link org.pentaho.platform.scheduler2.blockout.PentahoBlockoutManager#willBlockSchedules
-   * (org.pentaho.platform.scheduler2.blockout.SimpleBlockoutTrigger)}
-   * .
-   */
-  @Test
-  public void testWillBlockSchedules() throws Exception {
-    Calendar trueBlockOutStartDate = new GregorianCalendar( 2013, Calendar.JANUARY, 7 );
-    IJobTrigger trueBlockOutTrigger =
-        new SimpleJobTrigger( trueBlockOutStartDate.getTime(), null, -1, TIME.WEEK.time / 1000 );
-    trueBlockOutTrigger.setDuration( duration );
-
-    Calendar falseBlockOutStartDate = new GregorianCalendar( 2013, Calendar.JANUARY, 9 );
-    IJobTrigger falseBlockOutTrigger =
-        new SimpleJobTrigger( falseBlockOutStartDate.getTime(), null, -1, TIME.WEEK.time / 1000 );
-    falseBlockOutTrigger.setDuration( duration );
-
-    IJobTrigger trueComplexBlockOutTrigger = new ComplexJobTrigger();
-    trueComplexBlockOutTrigger.setStartTime( trueBlockOutStartDate.getTime() );
-    trueComplexBlockOutTrigger.setCronString( "0 0 0 ? * 2 *" ); //$NON-NLS-1$
-    trueComplexBlockOutTrigger.setDuration( duration );
-
-    IJobTrigger falseComplexBlockOutTrigger = new ComplexJobTrigger();
-    falseComplexBlockOutTrigger.setStartTime( falseBlockOutStartDate.getTime() );
-    falseComplexBlockOutTrigger.setCronString( "0 0 0 ? * WED *" ); //$NON-NLS-1$
-    falseComplexBlockOutTrigger.setDuration( duration );
-
-    Calendar scheduleStartDate = new GregorianCalendar( 2013, Calendar.JANUARY, 7, 1, 0, 0 );
-    IJobTrigger scheduleTrigger = new SimpleJobTrigger( scheduleStartDate.getTime(), null, -1, TIME.WEEK.time / 1000 );
-    addJob( scheduleTrigger, "scheduleTrigger" ); //$NON-NLS-1$
-
-    assertEquals( 1, this.blockOutManager.willBlockSchedules( trueBlockOutTrigger ).size() );
-    assertEquals( 1, this.blockOutManager.willBlockSchedules( trueComplexBlockOutTrigger ).size() );
-    assertEquals( 0, this.blockOutManager.willBlockSchedules( falseBlockOutTrigger ).size() );
-    assertEquals( 0, this.blockOutManager.willBlockSchedules( falseComplexBlockOutTrigger ).size() );
-
-    IJobTrigger cronTrigger = new ComplexJobTrigger();
-    cronTrigger.setStartTime( scheduleStartDate.getTime() );
-    cronTrigger.setCronString( "0 0 1 ? * 2-3 *" ); //$NON-NLS-1$
-    addJob( cronTrigger, "cronTrigger" ); //$NON-NLS-1$
-
-    assertEquals( 2, this.blockOutManager.willBlockSchedules( trueBlockOutTrigger ).size() );
-    assertEquals( 2, this.blockOutManager.willBlockSchedules( trueComplexBlockOutTrigger ).size() );
-    assertEquals( 0, this.blockOutManager.willBlockSchedules( falseBlockOutTrigger ).size() );
-    assertEquals( 0, this.blockOutManager.willBlockSchedules( falseComplexBlockOutTrigger ).size() );
-
-    IJobTrigger complexJobTrigger1 = new ComplexJobTrigger( null, null, null, ComplexJobTrigger.MONDAY, 0 );
-    complexJobTrigger1.setStartTime( scheduleStartDate.getTime() );
-    addJob( complexJobTrigger1, "complexJobTrigger1" ); //$NON-NLS-1$
-
-    assertEquals( 3, this.blockOutManager.willBlockSchedules( trueBlockOutTrigger ).size() );
-    assertEquals( 3, this.blockOutManager.willBlockSchedules( trueComplexBlockOutTrigger ).size() );
-    assertEquals( 0, this.blockOutManager.willBlockSchedules( falseBlockOutTrigger ).size() );
-    assertEquals( 0, this.blockOutManager.willBlockSchedules( falseComplexBlockOutTrigger ).size() );
-
-    // Test non-standard interval
-    IJobTrigger complexJobTrigger2 = new ComplexJobTrigger( null, null, 1, null, 0 );
-    complexJobTrigger2.setStartTime( scheduleStartDate.getTime() );
-    addJob( complexJobTrigger2, "complexJobTrigger2" ); //$NON-NLS-1$
-
-    assertEquals( 4, this.blockOutManager.willBlockSchedules( trueBlockOutTrigger ).size() );
-    assertEquals( 4, this.blockOutManager.willBlockSchedules( trueComplexBlockOutTrigger ).size() );
-    assertEquals( 1, this.blockOutManager.willBlockSchedules( falseBlockOutTrigger ).size() );
-    assertEquals( 1, this.blockOutManager.willBlockSchedules( falseComplexBlockOutTrigger ).size() );
-  }
-
-  private Job addBlockOutJob( IJobTrigger blockOutJobTrigger ) throws Exception {
+  private IJob addBlockOutJob( IJobTrigger blockOutJobTrigger ) throws Exception {
     Map<String, Object> jobParams = new HashMap<String, Object>();
     jobParams.put( IBlockoutManager.DURATION_PARAM, blockOutJobTrigger.getDuration() );
 
     return addJob( blockOutJobTrigger, IBlockoutManager.BLOCK_OUT_JOB_NAME, new BlockoutAction(), jobParams );
   }
 
-  private Job addJob( IJobTrigger jobTrigger, String jobName ) throws Exception {
+  private IJob addJob( IJobTrigger jobTrigger, String jobName ) throws Exception {
     return addJob( jobTrigger, jobName, new IAction() {
       @Override
       public void execute() throws Exception {
@@ -349,9 +266,9 @@ public class PentahoBlockoutManagerIT {
     }, new HashMap<String, Object>() );
   }
 
-  private Job addJob( IJobTrigger jobTrigger, String jobName, IAction action, Map<String, Object> jobParams )
+  private IJob addJob( IJobTrigger jobTrigger, String jobName, IAction action, Map<String, Object> jobParams )
     throws Exception {
-    Job job = this.scheduler.createJob( jobName, action.getClass(), jobParams, jobTrigger );
+    IJob job = this.scheduler.createJob( jobName, action.getClass(), jobParams, jobTrigger );
     this.jobIdsToClear.add( job.getJobId() );
     return job;
   }

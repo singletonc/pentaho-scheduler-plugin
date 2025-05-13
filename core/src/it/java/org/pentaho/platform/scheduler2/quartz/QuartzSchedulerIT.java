@@ -23,6 +23,7 @@ import org.pentaho.platform.api.scheduler2.IJobTrigger;
 import org.pentaho.platform.api.scheduler2.IScheduler;
 import org.pentaho.platform.api.scheduler2.ISchedulerListener;
 import org.pentaho.platform.api.scheduler2.Job;
+import org.pentaho.platform.api.scheduler2.JobState;
 import org.pentaho.platform.api.scheduler2.SchedulerException;
 import org.pentaho.platform.api.scheduler2.SimpleJobTrigger;
 import org.pentaho.platform.engine.core.system.boot.PlatformInitializationException;
@@ -82,7 +83,7 @@ public class QuartzSchedulerIT {
     final Job job = scheduler.createJob( JOB_NAME, actionId, null, trigger, outputStreamProvider );
 
     assertNotNull( job );
-    assertEquals( Job.JobState.NORMAL, job.getState() );
+    assertEquals( JobState.NORMAL, job.getState() );
 
     assertTrue( job.getJobParams().containsKey( QuartzScheduler.RESERVEDMAPKEY_ACTIONID ) );
     assertEquals( actionId, job.getJobParams().get( QuartzScheduler.RESERVEDMAPKEY_ACTIONID ) );
@@ -105,7 +106,7 @@ public class QuartzSchedulerIT {
 
     assertNotNull( job );
     assertEquals( "ninja", job.getUserName() );
-    assertEquals( Job.JobState.NORMAL, job.getState() );
+    assertEquals( JobState.NORMAL, job.getState() );
   }
 
   @Test
@@ -191,7 +192,7 @@ public class QuartzSchedulerIT {
     assertEquals( jobDetails, job.getJobParams() );
     assertEquals( USER_NAME, job.getUserName() );
     assertEquals( JOB_NAME, job.getJobName() );
-    assertEquals( Job.JobState.NORMAL, job.getState() );
+    assertEquals( JobState.NORMAL, job.getState() );
   }
 
   @Test

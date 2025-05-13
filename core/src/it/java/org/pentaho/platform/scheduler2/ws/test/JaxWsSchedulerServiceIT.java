@@ -31,6 +31,7 @@ import org.pentaho.platform.api.engine.IPluginManager;
 import org.pentaho.platform.api.engine.IUserRoleListService;
 import org.pentaho.platform.api.engine.PluginBeanException;
 import org.pentaho.platform.api.scheduler2.ComplexJobTrigger;
+import org.pentaho.platform.api.scheduler2.IJob;
 import org.pentaho.platform.api.scheduler2.IJobFilter;
 import org.pentaho.platform.api.scheduler2.IScheduler;
 import org.pentaho.platform.api.scheduler2.IScheduler.SchedulerStatus;
@@ -38,7 +39,7 @@ import org.pentaho.platform.api.scheduler2.Job;
 import org.pentaho.platform.api.scheduler2.JobTrigger;
 import org.pentaho.platform.api.scheduler2.SchedulerException;
 import org.pentaho.platform.api.scheduler2.SimpleJobTrigger;
-import org.pentaho.platform.api.scheduler2.recur.ITimeRecurrence;
+import org.pentaho.platform.scheduler2.recur.ITimeRecurrence;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.core.system.boot.PlatformInitializationException;
 import org.pentaho.platform.scheduler2.quartz.test.StubUserDetailsService;
@@ -49,6 +50,7 @@ import org.pentaho.platform.scheduler2.ws.ListParamValue;
 import org.pentaho.platform.scheduler2.ws.MapParamValue;
 import org.pentaho.platform.scheduler2.ws.ParamValue;
 import org.pentaho.platform.scheduler2.ws.StringParamValue;
+import org.pentaho.platform.scheduler2.ws.TestQuartzScheduler;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
 import org.pentaho.test.platform.engine.core.PluginManagerAdapter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -109,7 +111,7 @@ public class JaxWsSchedulerServiceIT {
 
   @After
   public void after() throws SchedulerException {
-    for ( Job job : scheduler.getJobs( null ) ) {
+    for ( IJob job : scheduler.getJobs( null ) ) {
       scheduler.removeJob( job.getJobId() );
     }
   }
@@ -184,13 +186,17 @@ public class JaxWsSchedulerServiceIT {
     //
     // First make sure the actual scheduler engine can find the newly created job
     //
-    List<Job> engineJobs = scheduler.getJobs( new IJobFilter() {
+    List<IJob> engineJobs = scheduler.getJobs( new IJobFilter() {
+      @Override public boolean accept( IJob job ) {
+        return false;
+      }
+
       public boolean accept( Job job ) {
         return job.getJobName().contains( "testGetJobsJob" );
       }
     } );
     Assert.assertEquals( "The scheduler engine does not know about the job.", 1, engineJobs.size() );
-    Job engineJob = engineJobs.get( 0 );
+    IJob engineJob = engineJobs.get( 0 );
 
     //
     // Now make sure we have the same job available on the webservice client side
@@ -199,7 +205,7 @@ public class JaxWsSchedulerServiceIT {
     Job serviceJob = schedulerSvc.getJobs()[0];
     Assert.assertEquals( "jobName is wrong", engineJob.getJobName(), serviceJob.getJobName() );
 
-    Map<String, Serializable> params = serviceJob.getJobParams();
+    Map<String, Object> params = serviceJob.getJobParams();
     Assert.assertTrue( "string job parameter is wrong", "testStringValue".equals( params.get( "stringParam" ) ) );
 
     Assert.assertTrue( "list job parameter is missing", params.containsKey( "listParam" ) );
@@ -278,7 +284,7 @@ public class JaxWsSchedulerServiceIT {
   public static class TstPluginManager extends PluginManagerAdapter {
 
     @Override
-    public Class<?> loadClass( String beanId ) throws PluginBeanException {
+    public Class<?> loadClass( String beanId ) {
       return MyAction.class;
     }
   }

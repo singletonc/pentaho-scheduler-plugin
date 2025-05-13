@@ -13,7 +13,6 @@
 
 package org.pentaho.platform.scheduler2.quartz.test;
 
-import java.io.Serializable;
 import java.security.Principal;
 import java.util.Calendar;
 import java.util.Date;
@@ -32,7 +31,7 @@ import org.pentaho.platform.api.scheduler2.Job;
 import org.pentaho.platform.api.scheduler2.JobTrigger;
 import org.pentaho.platform.api.scheduler2.SchedulerException;
 import org.pentaho.platform.api.scheduler2.SimpleJobTrigger;
-import org.pentaho.platform.api.scheduler2.recur.ITimeRecurrence;
+import org.pentaho.platform.scheduler2.recur.ITimeRecurrence;
 import org.pentaho.platform.engine.core.TestAuditEntry;
 import org.pentaho.platform.engine.core.system.boot.PlatformInitializationException;
 import org.pentaho.platform.engine.security.SecurityHelper;
@@ -41,7 +40,7 @@ import org.pentaho.platform.scheduler2.quartz.QuartzSchedulerAvailability;
 import org.pentaho.platform.scheduler2.recur.IncrementalRecurrence;
 import org.pentaho.platform.scheduler2.recur.RecurrenceList;
 import org.pentaho.platform.scheduler2.recur.SequentialRecurrence;
-import org.pentaho.platform.scheduler2.ws.test.TestQuartzScheduler;
+import org.pentaho.platform.scheduler2.ws.TestQuartzScheduler;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
